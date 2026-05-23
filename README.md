@@ -1,36 +1,134 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StockFlow
 
-## Getting Started
+Mini plataforma fullstack para controlar inventario multi-sucursal con movimientos asincronos.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 App Router
+- React 19
+- MongoDB + Mongoose
+- Zod para validacion
+- Vitest para pruebas unitarias
+- Vercel como destino de deploy
+
+## Funcionalidad
+
+- CRUD de productos.
+- CRUD de sucursales.
+- Dashboard con stock total por producto y stock por sucursal.
+- Registro de entradas, salidas y transferencias.
+- Movimientos creados como `pending` y procesados despues de responder al cliente.
+- Worker HTTP en `/api/worker/process` para procesar pendientes manualmente o desde cron.
+- Reintentos: cada movimiento falla definitivamente hasta agotar `maxAttempts`.
+- Validacion atomica de stock disponible con MongoDB para evitar sobreventa por concurrencia.
+- Historial de movimientos con filtros por estado y sucursal.
+- Detalle de cada movimiento.
+- Reporte por rango de fechas con totales por tipo y sucursal.
+
+## Setup local
+
+1. Instalar dependencias:
+
+```bash
+npm install
+```
+
+2. Crear variables de entorno:
+
+```bash
+cp .env.example .env.local
+```
+
+3. Levantar MongoDB local con Docker:
+
+```bash
+docker compose up -d
+```
+
+4. Cargar datos demo:
+
+```bash
+npm run seed
+```
+
+5. Ejecutar la app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+La app queda en `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Variables de entorno
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+MONGODB_URI=mongodb://localhost:27017/stockflow
+MONGODB_DB_NAME=stockflow
+WORKER_SECRET=
+```
 
-## Learn More
+`WORKER_SECRET` es opcional. Si se define, `/api/worker/process` requiere:
 
-To learn more about Next.js, take a look at the following resources:
+```txt
+Authorization: Bearer <WORKER_SECRET>
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run dev
+npm run build
+npm run lint
+npm run test
+npm run seed
+```
 
-## Deploy on Vercel
+## Deploy
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Frontend y backend viven en el mismo proyecto Next.js, asi que el deploy recomendado es un solo proyecto en Vercel.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Crear una base MongoDB Atlas.
+2. Subir el repo publico a GitHub.
+3. Importar el repo en Vercel.
+4. Configurar `MONGODB_URI` y `MONGODB_DB_NAME`.
+5. Deploy.
+
+URL de Vercel: pendiente de reemplazar despues del deploy.
+
+## Arquitectura
+
+```txt
+React UI
+  |
+  v
+Next.js Route Handlers
+  |
+  v
+MongoDB Atlas / Mongo local
+  |
+  v
+Worker HTTP + after()
+  |
+  v
+Stocks actualizados + movimientos historicos
+```
+
+## Decisiones y trade-offs
+
+Use Next.js fullstack para reducir superficie de deploy: no hay CORS, no hay dos servicios que coordinar y las API Routes viven cerca de la UI.
+
+No use RabbitMQ/BullMQ en esta version. Para 48 horas, el procesamiento se resuelve con un worker HTTP y `after()` de Next.js para disparar trabajo despues de responder al cliente. Es simple, corre en Vercel y queda explicado. En produccion con mayor carga, moveria esto a BullMQ/Redis o una cola administrada.
+
+La concurrencia de stock se maneja con `findOneAndUpdate` atomico usando `quantity: { $gte: cantidad }`. Si dos salidas compiten por el mismo stock, Mongo solo permite descontar a la que aun cumple la condicion.
+
+Las transferencias descuentan origen y luego incrementan destino. Si el incremento falla, se intenta compensar devolviendo stock al origen. Para una version mas robusta usaria transacciones MongoDB en replica set.
+
+## Que haria diferente con una semana
+
+- Cola real con BullMQ + Redis o servicio administrado.
+- Transacciones MongoDB para transferencias multi-documento.
+- Autenticacion con roles por sucursal.
+- Auditoria mas completa con usuario, IP y metadata del request.
+- Observabilidad con logs estructurados y metricas de worker.
+- Mas pruebas de integracion con una base MongoDB efimera.
+- Paginacion y busqueda avanzada en productos y movimientos.

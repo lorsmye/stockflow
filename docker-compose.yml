@@ -1,0 +1,11 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: stockflow-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - stockflow-mongo-data:/data/db
+
+volumes:
+  stockflow-mongo-data:
