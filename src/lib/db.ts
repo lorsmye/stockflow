@@ -30,9 +30,16 @@ export async function connectToDatabase() {
   if (!globalCache.promise) {
     globalCache.promise = mongoose.connect(uri, {
       dbName: process.env.MONGODB_DB_NAME || undefined,
+      serverSelectionTimeoutMS: 10_000,
     });
   }
 
-  globalCache.conn = await globalCache.promise;
-  return globalCache.conn;
+  try {
+    globalCache.conn = await globalCache.promise;
+    return globalCache.conn;
+  } catch (error) {
+    globalCache.promise = null;
+    globalCache.conn = null;
+    throw error;
+  }
 }
