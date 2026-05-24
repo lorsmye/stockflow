@@ -33,17 +33,21 @@ Mini plataforma fullstack para controlar inventario multi-sucursal con movimient
 npm install
 ```
 
-2. Crear variables de entorno:
+2. Crear `.env.local`:
 
 ```bash
-cp .env.example .env.local
+MONGODB_URI=mongodb+srv://usuario:password@cluster.mongodb.net/stockflow?appName=stockflow-cluster
+MONGODB_DB_NAME=stockflow
+WORKER_SECRET=
 ```
 
-3. Levantar MongoDB local con Docker:
+3. Si usas Mongo local, levantar MongoDB con Docker:
 
 ```bash
 docker compose up -d
 ```
+
+Si usas MongoDB Atlas, puedes saltar el paso de Docker.
 
 4. Cargar datos demo:
 
