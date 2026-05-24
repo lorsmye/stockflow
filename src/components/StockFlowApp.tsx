@@ -93,6 +93,7 @@ type ApiResponse<T> = {
 };
 
 type Tab = "dashboard" | "products" | "branches" | "movements" | "reports";
+type AlertPhase = "visible" | "hiding";
 
 type DeleteConfirmation =
   | { kind: "product"; product: Product }
@@ -169,7 +170,18 @@ export function StockFlowApp() {
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [alertPhase, setAlertPhase] = useState<AlertPhase>("visible");
   const [deleteConfirmation, setDeleteConfirmation] = useState<DeleteConfirmation>(null);
+
+  const showNotice = useCallback((message: string) => {
+    setAlertPhase("visible");
+    setNotice(message);
+  }, []);
+
+  const showError = useCallback((message: string) => {
+    setAlertPhase("visible");
+    setError(message);
+  }, []);
 
   const loadProducts = useCallback(async () => {
     const data = await apiRequest<Product[]>("/api/products");
@@ -213,14 +225,14 @@ export function StockFlowApp() {
         const initialReport = await apiRequest<ReportPayload>("/api/reports/movements");
         setReport(initialReport);
       } catch (requestError) {
-        setError(getErrorMessage(requestError));
+        showError(getErrorMessage(requestError));
       } finally {
         setIsLoading(false);
       }
     }
 
     void boot();
-  }, [refreshOperationalData]);
+  }, [refreshOperationalData, showError]);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -230,6 +242,25 @@ export function StockFlowApp() {
 
     return () => window.clearInterval(interval);
   }, [loadMovements, loadStocks]);
+
+  useEffect(() => {
+    if (!error && !notice) {
+      return;
+    }
+    const hideTimer = window.setTimeout(() => {
+      setAlertPhase("hiding");
+    }, 3700);
+    const clearTimer = window.setTimeout(() => {
+      setError("");
+      setNotice("");
+      setAlertPhase("visible");
+    }, 4000);
+
+    return () => {
+      window.clearTimeout(hideTimer);
+      window.clearTimeout(clearTimer);
+    };
+  }, [error, notice]);
 
   const stats = useMemo(() => {
     const totalUnits = stockRows.reduce((sum, row) => sum + row.total, 0);
@@ -247,10 +278,10 @@ export function StockFlowApp() {
       await action();
 
       if (successMessage) {
-        setNotice(successMessage);
+        showNotice(successMessage);
       }
     } catch (requestError) {
-      setError(getErrorMessage(requestError));
+      showError(getErrorMessage(requestError));
     } finally {
       setIsBusy(false);
     }
@@ -331,7 +362,7 @@ export function StockFlowApp() {
         method: "POST",
       });
       await Promise.all([loadMovements(), loadStocks()]);
-      setNotice(
+      showNotice(
         `Worker reviso ${summary.checked}, proceso ${summary.processed}, reintento ${summary.retried} y fallo ${summary.failed}.`,
       );
     });
@@ -401,8 +432,8 @@ export function StockFlowApp() {
         ))}
       </nav>
 
-      {error ? <div className="alert error">{error}</div> : null}
-      {notice ? <div className="alert success">{notice}</div> : null}
+      {error ? <div className={`alert error ${alertPhase}`}>{error}</div> : null}
+      {notice ? <div className={`alert success ${alertPhase}`}>{notice}</div> : null}
 
       {activeTab === "dashboard" ? renderDashboard() : null}
       {activeTab === "products" ? renderProducts() : null}

@@ -415,6 +415,16 @@ td {
   margin: 0 auto 16px;
   max-width: 1440px;
   padding: 12px 14px;
+  transform-origin: left center;
+  will-change: opacity, transform;
+}
+
+.alert.visible {
+  animation: alert-slide-in 260ms ease-out both;
+}
+
+.alert.hiding {
+  animation: alert-slide-out 300ms ease-in both;
 }
 
 .alert.error {
@@ -427,6 +437,30 @@ td {
   background: #e6f4ef;
   border: 1px solid #b4d9cc;
   color: var(--success);
+}
+
+@keyframes alert-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes alert-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
 }
 
 .empty-state {
