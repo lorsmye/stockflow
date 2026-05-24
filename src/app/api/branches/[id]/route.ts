@@ -32,7 +32,7 @@ export async function PUT(request: Request, context: Params) {
     const { id } = await context.params;
     const payload = branchUpdateSchema.parse(await readJson(request));
     const branch = await Branch.findByIdAndUpdate(requireId(id), payload, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     }).lean();
 

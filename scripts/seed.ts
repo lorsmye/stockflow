@@ -1,6 +1,9 @@
+import { loadEnvConfig } from "@next/env";
 import { connectToDatabase } from "../src/lib/db";
 import { Branch, Product, Stock } from "../src/models";
 import type { Types } from "mongoose";
+
+loadEnvConfig(process.cwd());
 
 async function main() {
   const db = await connectToDatabase();
@@ -14,7 +17,7 @@ async function main() {
         price: 1299,
         category: "Perifericos",
       },
-      { upsert: true, new: true, runValidators: true },
+      { upsert: true, returnDocument: "after", runValidators: true },
     ),
     Product.findOneAndUpdate(
       { sku: "MOU-002" },
@@ -24,7 +27,7 @@ async function main() {
         price: 649,
         category: "Perifericos",
       },
-      { upsert: true, new: true, runValidators: true },
+      { upsert: true, returnDocument: "after", runValidators: true },
     ),
     Product.findOneAndUpdate(
       { sku: "MON-003" },
@@ -34,7 +37,7 @@ async function main() {
         price: 4599,
         category: "Pantallas",
       },
-      { upsert: true, new: true, runValidators: true },
+      { upsert: true, returnDocument: "after", runValidators: true },
     ),
   ]);
 
@@ -42,17 +45,17 @@ async function main() {
     Branch.findOneAndUpdate(
       { name: "Centro" },
       { name: "Centro", location: "CDMX Centro" },
-      { upsert: true, new: true, runValidators: true },
+      { upsert: true, returnDocument: "after", runValidators: true },
     ),
     Branch.findOneAndUpdate(
       { name: "Norte" },
       { name: "Norte", location: "Monterrey" },
-      { upsert: true, new: true, runValidators: true },
+      { upsert: true, returnDocument: "after", runValidators: true },
     ),
     Branch.findOneAndUpdate(
       { name: "Online" },
       { name: "Online", location: "Ecommerce" },
-      { upsert: true, new: true, runValidators: true },
+      { upsert: true, returnDocument: "after", runValidators: true },
     ),
   ]);
 

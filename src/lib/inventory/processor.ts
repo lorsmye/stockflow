@@ -88,7 +88,7 @@ export async function processPendingMovements(options: ProcessOptions = {}) {
         $set: { lockedUntil: new Date(now.getTime() + lockMs) },
         $inc: { attempts: 1 },
       },
-      { new: true, sort: { createdAt: 1 } },
+      { returnDocument: "after", sort: { createdAt: 1 } },
     );
 
     if (!movement) {
@@ -225,7 +225,7 @@ async function incrementStock(
       $inc: { quantity },
       $setOnInsert: { productId, branchId },
     },
-    { upsert: true, new: true },
+    { upsert: true, returnDocument: "after" },
   );
 }
 
@@ -241,7 +241,7 @@ async function decrementStock(
       quantity: { $gte: quantity },
     },
     { $inc: { quantity: -quantity } },
-    { new: true },
+    { returnDocument: "after" },
   );
 
   if (!updated) {

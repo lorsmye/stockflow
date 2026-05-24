@@ -32,7 +32,7 @@ export async function PUT(request: Request, context: Params) {
     const { id } = await context.params;
     const payload = productUpdateSchema.parse(await readJson(request));
     const product = await Product.findByIdAndUpdate(requireId(id), payload, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     }).lean();
 
