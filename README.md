@@ -97,7 +97,7 @@ Frontend y backend viven en el mismo proyecto Next.js, asi que el deploy recomen
 4. Configurar `MONGODB_URI` y `MONGODB_DB_NAME`.
 5. Deploy.
 
-URL de Vercel: pendiente de reemplazar despues del deploy.
+URL de Vercel: https://stockflow-sigma-sandy.vercel.app/
 
 ## Arquitectura
 
