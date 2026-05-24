@@ -94,6 +94,11 @@ type ApiResponse<T> = {
 
 type Tab = "dashboard" | "products" | "branches" | "movements" | "reports";
 
+type DeleteConfirmation =
+  | { kind: "product"; product: Product }
+  | { kind: "branch"; branch: Branch }
+  | null;
+
 const moneyFormatter = new Intl.NumberFormat("es-MX", {
   style: "currency",
   currency: "MXN",
@@ -164,6 +169,7 @@ export function StockFlowApp() {
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [deleteConfirmation, setDeleteConfirmation] = useState<DeleteConfirmation>(null);
 
   const loadProducts = useCallback(async () => {
     const data = await apiRequest<Product[]>("/api/products");
@@ -300,26 +306,23 @@ export function StockFlowApp() {
     }, "Movimiento registrado como pendiente.");
   }
 
-  async function deleteProduct(product: Product) {
-    if (!window.confirm(`Eliminar producto ${product.sku}?`)) {
+  async function confirmDelete() {
+    if (!deleteConfirmation) {
       return;
     }
 
+    const target = deleteConfirmation;
     await runAction(async () => {
-      await apiRequest<Product>(`/api/products/${product.id}`, { method: "DELETE" });
-      await Promise.all([loadProducts(), loadStocks(), loadMovements()]);
-    }, "Producto eliminado.");
-  }
+      if (target.kind === "product") {
+        await apiRequest<Product>(`/api/products/${target.product.id}`, { method: "DELETE" });
+        await Promise.all([loadProducts(), loadStocks(), loadMovements()]);
+      } else {
+        await apiRequest<Branch>(`/api/branches/${target.branch.id}`, { method: "DELETE" });
+        await Promise.all([loadBranches(), loadStocks(), loadMovements()]);
+      }
 
-  async function deleteBranch(branch: Branch) {
-    if (!window.confirm(`Eliminar sucursal ${branch.name}?`)) {
-      return;
-    }
-
-    await runAction(async () => {
-      await apiRequest<Branch>(`/api/branches/${branch.id}`, { method: "DELETE" });
-      await Promise.all([loadBranches(), loadStocks(), loadMovements()]);
-    }, "Sucursal eliminada.");
+      setDeleteConfirmation(null);
+    }, target.kind === "product" ? "Producto eliminado." : "Sucursal eliminada.");
   }
 
   async function processPending() {
@@ -406,6 +409,7 @@ export function StockFlowApp() {
       {activeTab === "branches" ? renderBranches() : null}
       {activeTab === "movements" ? renderMovements() : null}
       {activeTab === "reports" ? renderReports() : null}
+      {deleteConfirmation ? renderDeleteConfirmation() : null}
     </main>
   );
 
@@ -592,8 +596,8 @@ export function StockFlowApp() {
                           <Pencil size={16} />
                         </button>
                         <button
-                          className="icon-button"
-                          onClick={() => void deleteProduct(product)}
+                          className="icon-button danger"
+                          onClick={() => setDeleteConfirmation({ kind: "product", product })}
                           title="Eliminar producto"
                           type="button"
                         >
@@ -696,8 +700,8 @@ export function StockFlowApp() {
                           <Pencil size={16} />
                         </button>
                         <button
-                          className="icon-button"
-                          onClick={() => void deleteBranch(branch)}
+                          className="icon-button danger"
+                          onClick={() => setDeleteConfirmation({ kind: "branch", branch })}
                           title="Eliminar sucursal"
                           type="button"
                         >
@@ -1054,6 +1058,59 @@ export function StockFlowApp() {
       const data = await apiRequest<ReportPayload>("/api/reports/movements");
       setReport(data);
     }, "Reporte actualizado.");
+  }
+
+  function renderDeleteConfirmation() {
+    if (!deleteConfirmation) {
+      return null;
+    }
+
+    const isProduct = deleteConfirmation.kind === "product";
+    const title = isProduct
+      ? `Eliminar ${deleteConfirmation.product.name}`
+      : `Eliminar ${deleteConfirmation.branch.name}`;
+    const description = isProduct
+      ? `Se borrara el producto ${deleteConfirmation.product.sku} y su stock asociado.`
+      : `Se borrara la sucursal ${deleteConfirmation.branch.name} y su stock asociado.`;
+
+    return (
+      <div className="modal-backdrop" role="presentation">
+        <section
+          aria-labelledby="delete-confirmation-title"
+          aria-modal="true"
+          className="confirm-dialog"
+          role="dialog"
+        >
+          <div className="confirm-icon">
+            <Trash2 size={22} />
+          </div>
+          <div>
+            <h2 id="delete-confirmation-title">{title}</h2>
+            <p>{description}</p>
+            <p>Esta accion no se puede deshacer.</p>
+          </div>
+          <div className="confirm-actions">
+            <button
+              className="button"
+              disabled={isBusy}
+              onClick={() => setDeleteConfirmation(null)}
+              type="button"
+            >
+              Cancelar
+            </button>
+            <button
+              className="button danger-solid"
+              disabled={isBusy}
+              onClick={() => void confirmDelete()}
+              type="button"
+            >
+              <Trash2 size={16} />
+              Aceptar, borrar
+            </button>
+          </div>
+        </section>
+      </div>
+    );
   }
 }
 
