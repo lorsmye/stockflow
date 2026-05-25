@@ -205,6 +205,34 @@ button:disabled {
   grid-template-columns: minmax(320px, 0.75fr) minmax(0, 1.25fr);
 }
 
+.movement-layout {
+  align-items: start;
+}
+
+.movement-form {
+  align-self: start;
+}
+
+.movement-history {
+  display: flex;
+  flex-direction: column;
+  max-height: min(760px, calc(100vh - 220px));
+  min-height: 420px;
+}
+
+.movement-table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.movement-table-wrap thead th {
+  background: var(--panel);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);

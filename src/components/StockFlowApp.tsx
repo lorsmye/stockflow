@@ -732,8 +732,8 @@ export function StockFlowApp() {
 
   function renderMovements() {
     return (
-      <section className="layout-grid two">
-        <form className="panel form-grid" onSubmit={handleMovementSubmit}>
+      <section className="layout-grid two movement-layout">
+        <form className="panel form-grid movement-form" onSubmit={handleMovementSubmit}>
           <div className="panel-header">
             <div>
               <h2>Nuevo movimiento</h2>
@@ -842,7 +842,7 @@ export function StockFlowApp() {
           </div>
         </form>
 
-        <section className="panel">
+        <section className="panel movement-history">
           <div className="panel-header">
             <div>
               <h2>Historial</h2>
@@ -873,7 +873,7 @@ export function StockFlowApp() {
               </select>
             </div>
           </div>
-          <div className="table-wrap">
+          <div className="table-wrap movement-table-wrap">
             <table>
               <thead>
                 <tr>
