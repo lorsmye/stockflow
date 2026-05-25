@@ -31,6 +31,8 @@ type Branch = {
   id: string;
   name: string;
   location: string;
+  isActive?: boolean;
+  deactivatedAt?: string;
 };
 
 type BranchStock = {
@@ -262,6 +264,11 @@ export function StockFlowApp() {
 
     return { totalUnits, pending, failed };
   }, [movements, stockRows]);
+  const activeBranches = useMemo(
+    () => branches.filter((branch) => branch.isActive !== false),
+    [branches],
+  );
+  const inactiveBranches = branches.length - activeBranches.length;
 
   async function runAction(action: () => Promise<void>, successMessage?: string) {
     try {
@@ -346,7 +353,14 @@ export function StockFlowApp() {
       }
 
       setDeleteConfirmation(null);
-    }, target.kind === "product" ? "Producto desactivado." : "Sucursal eliminada.");
+    }, target.kind === "product" ? "Producto desactivado." : "Sucursal desactivada.");
+  }
+
+  async function activateBranch(branch: Branch) {
+    await runAction(async () => {
+      await apiRequest<Branch>(`/api/branches/${branch.id}/activate`, { method: "POST" });
+      await Promise.all([loadBranches(), loadStocks(), loadMovements()]);
+    }, "Sucursal activada.");
   }
 
   async function openMovementDetail(movementId: string) {
@@ -435,7 +449,7 @@ export function StockFlowApp() {
           </div>
           <div className="stat">
             <span>Sucursales</span>
-            <strong>{branches.length}</strong>
+            <strong>{activeBranches.length}</strong>
           </div>
           <div className="stat">
             <span>Unidades</span>
@@ -684,7 +698,10 @@ export function StockFlowApp() {
           <div className="panel-header">
             <div>
               <h2>Sucursales</h2>
-              <p>{branches.length} registros.</p>
+              <p>
+                {activeBranches.length} activas
+                {inactiveBranches ? `, ${inactiveBranches} inactivas` : ""}.
+              </p>
             </div>
           </div>
           <div className="table-wrap management-table-wrap">
@@ -693,6 +710,7 @@ export function StockFlowApp() {
                 <tr>
                   <th>Nombre</th>
                   <th>Ubicacion</th>
+                  <th>Estado</th>
                   <th aria-label="Acciones" />
                 </tr>
               </thead>
@@ -701,6 +719,11 @@ export function StockFlowApp() {
                   <tr key={branch.id}>
                     <td>{branch.name}</td>
                     <td>{branch.location}</td>
+                    <td>
+                      <span className={`badge ${branch.isActive === false ? "inactive" : "active"}`}>
+                        {branch.isActive === false ? "Inactiva" : "Activa"}
+                      </span>
+                    </td>
                     <td>
                       <div className="row-actions">
                         <button
@@ -711,14 +734,26 @@ export function StockFlowApp() {
                         >
                           <Pencil size={16} />
                         </button>
-                        <button
-                          className="icon-button danger"
-                          onClick={() => setDeleteConfirmation({ kind: "branch", branch })}
-                          title="Eliminar sucursal"
-                          type="button"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        {branch.isActive === false ? (
+                          <button
+                            className="icon-button success"
+                            disabled={isBusy}
+                            onClick={() => void activateBranch(branch)}
+                            title="Reactivar sucursal"
+                            type="button"
+                          >
+                            <RotateCcw size={16} />
+                          </button>
+                        ) : (
+                          <button
+                            className="icon-button danger"
+                            onClick={() => setDeleteConfirmation({ kind: "branch", branch })}
+                            title="Desactivar sucursal"
+                            type="button"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -808,7 +843,7 @@ export function StockFlowApp() {
                 value={movementForm.fromBranchId}
               >
                 <option value="">Sin origen</option>
-                {branches.map((branch) => (
+                {activeBranches.map((branch) => (
                   <option key={branch.id} value={branch.id}>
                     {branch.name}
                   </option>
@@ -827,7 +862,7 @@ export function StockFlowApp() {
                 value={movementForm.toBranchId}
               >
                 <option value="">Sin destino</option>
-                {branches.map((branch) => (
+                {activeBranches.map((branch) => (
                   <option key={branch.id} value={branch.id}>
                     {branch.name}
                   </option>
@@ -1071,10 +1106,10 @@ export function StockFlowApp() {
     const isProduct = deleteConfirmation.kind === "product";
     const title = isProduct
       ? `Desactivar ${deleteConfirmation.product.name}`
-      : `Eliminar ${deleteConfirmation.branch.name}`;
+      : `Desactivar ${deleteConfirmation.branch.name}`;
     const description = isProduct
       ? `El producto ${deleteConfirmation.product.sku} dejara de estar disponible para nuevos movimientos, pero seguira en el historial.`
-      : `Se borrara la sucursal ${deleteConfirmation.branch.name} y su stock asociado.`;
+      : `La sucursal ${deleteConfirmation.branch.name} dejara de estar disponible para nuevos movimientos, pero seguira en el historial. Solo se permite si no tiene stock asignado.`;
 
     return (
       <div className="modal-backdrop" role="presentation">
@@ -1090,7 +1125,7 @@ export function StockFlowApp() {
           <div>
             <h2 id="delete-confirmation-title">{title}</h2>
             <p>{description}</p>
-            <p>Esta accion no se puede deshacer.</p>
+            <p>{isProduct ? "Esta accion no se puede deshacer." : "Podras reactivarla despues."}</p>
           </div>
           <div className="confirm-actions">
             <button
@@ -1108,7 +1143,7 @@ export function StockFlowApp() {
               type="button"
             >
               <Trash2 size={16} />
-              {isProduct ? "Aceptar, desactivar" : "Aceptar, borrar"}
+              Aceptar, desactivar
             </button>
           </div>
         </section>

@@ -67,9 +67,9 @@ Next.js Route Handlers
 
    Elegi un monolito deployable en Vercel para concentrar el tiempo en funcionalidad y no en infraestructura. Esto tambien hace que el frontend y backend compartan modelos mentales y validaciones.
 
-2. Soft delete de productos
+2. Soft delete de productos y sucursales
 
-   Los productos se desactivan en lugar de borrarse fisicamente. Asi el SKU sigue reservado y los movimientos historicos conservan una referencia valida, evitando que un producto nuevo herede el historial de otro SKU reutilizado.
+   Los productos se desactivan en lugar de borrarse fisicamente. Asi el SKU sigue reservado y los movimientos historicos conservan una referencia valida, evitando que un producto nuevo herede el historial de otro SKU reutilizado. Aplique el mismo criterio a sucursales: se desactivan, no se eliminan, y solo se permite hacerlo cuando no tienen stock asignado.
 
 3. Worker simple en lugar de cola externa
 

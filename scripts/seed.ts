@@ -50,17 +50,17 @@ async function main() {
   const [centro, norte, online] = await Promise.all([
     Branch.findOneAndUpdate(
       { name: "Centro" },
-      { name: "Centro", location: "CDMX Centro" },
+      { name: "Centro", location: "CDMX Centro", isActive: true, deactivatedAt: null },
       { upsert: true, returnDocument: "after", runValidators: true },
     ),
     Branch.findOneAndUpdate(
       { name: "Norte" },
-      { name: "Norte", location: "Monterrey" },
+      { name: "Norte", location: "Monterrey", isActive: true, deactivatedAt: null },
       { upsert: true, returnDocument: "after", runValidators: true },
     ),
     Branch.findOneAndUpdate(
       { name: "Online" },
-      { name: "Online", location: "Ecommerce" },
+      { name: "Online", location: "Ecommerce", isActive: true, deactivatedAt: null },
       { upsert: true, returnDocument: "after", runValidators: true },
     ),
   ]);

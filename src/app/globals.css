@@ -176,6 +176,16 @@ button:disabled {
   color: #ffffff;
 }
 
+.icon-button.success {
+  color: var(--success);
+}
+
+.icon-button.success:hover {
+  background: var(--success);
+  border-color: var(--success);
+  color: #ffffff;
+}
+
 .button.danger-solid {
   background: var(--danger);
   border-color: var(--danger);
@@ -380,6 +390,16 @@ td {
 .badge.processed {
   background: #e6f4ef;
   color: var(--success);
+}
+
+.badge.active {
+  background: #e6f4ef;
+  color: var(--success);
+}
+
+.badge.inactive {
+  background: #f2f4f7;
+  color: var(--muted);
 }
 
 .badge.failed {

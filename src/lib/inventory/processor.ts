@@ -44,10 +44,13 @@ export async function validateMovementCanBeCreated(input: {
   const uniqueBranchIds = [...new Set(branchIds)];
 
   if (uniqueBranchIds.length > 0) {
-    const branchesCount = await Branch.countDocuments({ _id: { $in: uniqueBranchIds } });
+    const branchesCount = await Branch.countDocuments({
+      _id: { $in: uniqueBranchIds },
+      isActive: { $ne: false },
+    });
 
     if (branchesCount !== uniqueBranchIds.length) {
-      throw new ApiError(404, "Una de las sucursales seleccionadas no existe.");
+      throw new ApiError(404, "Una de las sucursales seleccionadas no existe o esta inactiva.");
     }
   }
 
@@ -233,7 +236,7 @@ async function applyMovement(movement: MovementDocument) {
 async function assertReferences(productId: Types.ObjectId, ...branchIds: Types.ObjectId[]) {
   const [product, branches] = await Promise.all([
     Product.exists({ _id: productId, isActive: { $ne: false } }),
-    Branch.countDocuments({ _id: { $in: branchIds } }),
+    Branch.countDocuments({ _id: { $in: branchIds }, isActive: { $ne: false } }),
   ]);
 
   if (!product) {
@@ -241,7 +244,7 @@ async function assertReferences(productId: Types.ObjectId, ...branchIds: Types.O
   }
 
   if (branches !== branchIds.length) {
-    throw new Error("Una sucursal del movimiento ya no existe.");
+    throw new Error("Una sucursal del movimiento ya no existe o esta inactiva.");
   }
 }
 
