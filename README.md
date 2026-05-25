@@ -18,8 +18,8 @@ Mini plataforma fullstack para controlar inventario multi-sucursal con movimient
 - Dashboard con stock total por producto y stock por sucursal.
 - Registro de entradas, salidas y transferencias.
 - Movimientos creados como `pending` y procesados despues de responder al cliente.
-- Worker HTTP en `/api/worker/process` para procesar pendientes desde el boton de la UI o desde cron.
-- Reintentos: cada movimiento falla definitivamente hasta agotar `maxAttempts`.
+- Worker asincrono disparado despues de crear movimientos; `/api/worker/process` queda disponible para cron o reintentos manuales.
+- Reintentos: el worker reintenta automaticamente una vez antes de marcar `failed`.
 - Validacion inicial de stock al registrar salidas/transferencias.
 - Validacion atomica de stock disponible con MongoDB para evitar sobreventa por concurrencia.
 - Historial de movimientos con filtros por estado y sucursal.
@@ -112,7 +112,7 @@ Next.js Route Handlers
 MongoDB Atlas / Mongo local
   |
   v
-Worker HTTP /api/worker/process
+after() + Worker HTTP /api/worker/process
   |
   v
 Stocks actualizados + movimientos historicos
@@ -122,7 +122,7 @@ Stocks actualizados + movimientos historicos
 
 Use Next.js fullstack para reducir superficie de deploy: no hay CORS, no hay dos servicios que coordinar y las API Routes viven cerca de la UI.
 
-No use RabbitMQ/BullMQ en esta version. Para 48 horas, el procesamiento se resuelve con un worker HTTP ejecutado desde la UI o desde un cron. Es simple, corre en Vercel y deja visible el estado `pending` antes de actualizar stock. En produccion con mayor carga, moveria esto a BullMQ/Redis o una cola administrada.
+No use RabbitMQ/BullMQ en esta version. Para 48 horas, el procesamiento se resuelve con un worker HTTP disparado con `after()` despues de responder al cliente, y el mismo endpoint queda disponible para cron o reintentos manuales. Si un movimiento falla, el worker espera brevemente y ejecuta un segundo ciclo; si vuelve a fallar, queda `failed` con razon legible. En produccion con mayor carga, moveria esto a BullMQ/Redis o una cola administrada.
 
 La concurrencia de stock se maneja con `findOneAndUpdate` atomico usando `quantity: { $gte: cantidad }`. Si dos salidas compiten por el mismo stock, Mongo solo permite descontar a la que aun cumple la condicion.
 

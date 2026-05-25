@@ -49,6 +49,9 @@ Next.js Route Handlers
   |
   +--> Crear movimiento pending
   |       |
+  |       v
+  |     after() dispara worker
+  |
   +--> Worker HTTP /api/worker/process
           |
           v
@@ -66,7 +69,7 @@ Next.js Route Handlers
 
 2. Worker simple en lugar de cola externa
 
-   Use un endpoint de worker para procesar movimientos despues de crearlos como `pending`. Es una solucion pragmatica para 48 horas y facilita demostrar el flujo desde la UI. El trade-off es que no tiene las garantias operativas de Redis/RabbitMQ.
+   Use `after()` para disparar el worker despues de responder con el movimiento `pending`, y mantuve un endpoint de worker para cron o reintentos manuales. Si el worker detecta un fallo recuperable, agenda un segundo ciclo corto antes de marcar `failed`. Es una solucion pragmatica para 48 horas. El trade-off es que no tiene las garantias operativas de Redis/RabbitMQ.
 
 3. Descuento atomico de stock
 

@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   Package,
   Pencil,
-  Play,
   Plus,
   RefreshCw,
   RotateCcw,
@@ -77,13 +76,6 @@ type ReportPayload = {
   total: number;
   byType: Array<{ type: MovementType; count: number }>;
   byBranch: Array<{ branchId: string; branchName: string; count: number }>;
-};
-
-type WorkerSummary = {
-  processed: number;
-  retried: number;
-  failed: number;
-  checked: number;
 };
 
 type ApiResponse<T> = {
@@ -354,18 +346,6 @@ export function StockFlowApp() {
 
       setDeleteConfirmation(null);
     }, target.kind === "product" ? "Producto eliminado." : "Sucursal eliminada.");
-  }
-
-  async function processPending() {
-    await runAction(async () => {
-      const summary = await apiRequest<WorkerSummary>("/api/worker/process?limit=10", {
-        method: "POST",
-      });
-      await Promise.all([loadMovements(), loadStocks()]);
-      showNotice(
-        `Worker reviso ${summary.checked}, proceso ${summary.processed}, reintento ${summary.retried} y fallo ${summary.failed}.`,
-      );
-    });
   }
 
   async function openMovementDetail(movementId: string) {
@@ -858,15 +838,6 @@ export function StockFlowApp() {
             <button className="button primary" disabled={isBusy} type="submit">
               <Plus size={16} />
               Registrar
-            </button>
-            <button
-              className="button warning"
-              disabled={isBusy}
-              onClick={() => void processPending()}
-              type="button"
-            >
-              <Play size={16} />
-              Procesar
             </button>
           </div>
         </form>

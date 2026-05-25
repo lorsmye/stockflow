@@ -1,6 +1,10 @@
+import { after } from "next/server";
 import { handleApiError, readJson } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { validateMovementCanBeCreated } from "@/lib/inventory/processor";
+import {
+  processPendingMovements,
+  validateMovementCanBeCreated,
+} from "@/lib/inventory/processor";
 import { serialize } from "@/lib/serialize";
 import { movementFilterSchema, movementInputSchema } from "@/lib/validation";
 import { Movement } from "@/models";
@@ -52,6 +56,14 @@ export async function POST(request: Request) {
       status: "pending",
       attempts: 0,
       maxAttempts: 2,
+    });
+
+    after(async () => {
+      try {
+        await processPendingMovements({ limit: 3 });
+      } catch (error) {
+        console.error("Async worker failed", error);
+      }
     });
 
     return Response.json({ data: serialize(movement) }, { status: 202 });

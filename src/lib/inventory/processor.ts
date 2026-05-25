@@ -7,6 +7,8 @@ import { insufficientStockReason, shouldFailPermanently } from "./rules";
 type ProcessOptions = {
   limit?: number;
   lockMs?: number;
+  retryDelayMs?: number;
+  retryDepth?: number;
 };
 
 export type WorkerSummary = {
@@ -63,6 +65,8 @@ export async function processPendingMovements(options: ProcessOptions = {}) {
 
   const limit = options.limit ?? 10;
   const lockMs = options.lockMs ?? 60_000;
+  const retryDelayMs = options.retryDelayMs ?? 800;
+  const retryDepth = options.retryDepth ?? 0;
   const touchedIds: Types.ObjectId[] = [];
   const summary: WorkerSummary = {
     processed: 0,
@@ -160,7 +164,31 @@ export async function processPendingMovements(options: ProcessOptions = {}) {
     }
   }
 
+  if (summary.retried > 0 && retryDepth < 1) {
+    await delay(retryDelayMs);
+    const retrySummary = await processPendingMovements({
+      limit,
+      lockMs,
+      retryDelayMs,
+      retryDepth: retryDepth + 1,
+    });
+
+    mergeWorkerSummary(summary, retrySummary);
+  }
+
   return summary;
+}
+
+function mergeWorkerSummary(summary: WorkerSummary, retrySummary: WorkerSummary) {
+  summary.processed += retrySummary.processed;
+  summary.retried += retrySummary.retried;
+  summary.failed += retrySummary.failed;
+  summary.checked += retrySummary.checked;
+  summary.details.push(...retrySummary.details);
+}
+
+function delay(milliseconds: number) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
 async function applyMovement(movement: MovementDocument) {
