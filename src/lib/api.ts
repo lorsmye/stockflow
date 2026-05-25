@@ -35,9 +35,11 @@ export function handleApiError(error: unknown) {
     );
   }
 
-  if (isDuplicateKeyError(error)) {
+  const duplicateKeyMessage = getDuplicateKeyMessage(error);
+
+  if (duplicateKeyMessage) {
     return Response.json(
-      { error: "Ya existe un registro con un valor unico duplicado." },
+      { error: duplicateKeyMessage },
       { status: 409 },
     );
   }
@@ -60,6 +62,32 @@ export function requireId(id: string) {
 
 function isDuplicateKeyError(error: unknown) {
   return typeof error === "object" && error !== null && "code" in error && error.code === 11000;
+}
+
+function getDuplicateKeyMessage(error: unknown) {
+  if (!isDuplicateKeyError(error)) {
+    return null;
+  }
+
+  if (hasDuplicateKey(error, "sku")) {
+    return "Este SKU ya esta asignado a un producto. Usa otro SKU.";
+  }
+
+  if (hasDuplicateKey(error, "name")) {
+    return "Ya existe un registro con ese nombre.";
+  }
+
+  return "Ya existe un registro con un valor unico duplicado.";
+}
+
+function hasDuplicateKey(error: unknown, field: string) {
+  if (typeof error !== "object" || error === null || !("keyPattern" in error)) {
+    return false;
+  }
+
+  const keyPattern = error.keyPattern;
+
+  return typeof keyPattern === "object" && keyPattern !== null && field in keyPattern;
 }
 
 function isCastError(error: unknown) {

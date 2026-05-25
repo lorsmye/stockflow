@@ -29,10 +29,13 @@ export async function validateMovementCanBeCreated(input: {
   fromBranchId?: string;
   toBranchId?: string;
 }) {
-  const productExists = await Product.exists({ _id: input.productId });
+  const productExists = await Product.exists({
+    _id: input.productId,
+    isActive: { $ne: false },
+  });
 
   if (!productExists) {
-    throw new ApiError(404, "El producto seleccionado no existe.");
+    throw new ApiError(404, "El producto seleccionado no existe o esta inactivo.");
   }
 
   const branchIds = [input.fromBranchId, input.toBranchId].filter(
@@ -229,12 +232,12 @@ async function applyMovement(movement: MovementDocument) {
 
 async function assertReferences(productId: Types.ObjectId, ...branchIds: Types.ObjectId[]) {
   const [product, branches] = await Promise.all([
-    Product.exists({ _id: productId }),
+    Product.exists({ _id: productId, isActive: { $ne: false } }),
     Branch.countDocuments({ _id: { $in: branchIds } }),
   ]);
 
   if (!product) {
-    throw new Error("El producto ya no existe.");
+    throw new Error("El producto ya no existe o esta inactivo.");
   }
 
   if (branches !== branchIds.length) {

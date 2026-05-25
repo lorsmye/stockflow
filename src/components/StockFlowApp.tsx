@@ -24,6 +24,7 @@ type Product = {
   name: string;
   price: number;
   category: string;
+  isActive?: boolean;
 };
 
 type Branch = {
@@ -345,7 +346,7 @@ export function StockFlowApp() {
       }
 
       setDeleteConfirmation(null);
-    }, target.kind === "product" ? "Producto eliminado." : "Sucursal eliminada.");
+    }, target.kind === "product" ? "Producto desactivado." : "Sucursal eliminada.");
   }
 
   async function openMovementDetail(movementId: string) {
@@ -609,7 +610,7 @@ export function StockFlowApp() {
                         <button
                           className="icon-button danger"
                           onClick={() => setDeleteConfirmation({ kind: "product", product })}
-                          title="Eliminar producto"
+                          title="Desactivar producto"
                           type="button"
                         >
                           <Trash2 size={16} />
@@ -1069,10 +1070,10 @@ export function StockFlowApp() {
 
     const isProduct = deleteConfirmation.kind === "product";
     const title = isProduct
-      ? `Eliminar ${deleteConfirmation.product.name}`
+      ? `Desactivar ${deleteConfirmation.product.name}`
       : `Eliminar ${deleteConfirmation.branch.name}`;
     const description = isProduct
-      ? `Se borrara el producto ${deleteConfirmation.product.sku} y su stock asociado.`
+      ? `El producto ${deleteConfirmation.product.sku} dejara de estar disponible para nuevos movimientos, pero seguira en el historial.`
       : `Se borrara la sucursal ${deleteConfirmation.branch.name} y su stock asociado.`;
 
     return (
@@ -1107,7 +1108,7 @@ export function StockFlowApp() {
               type="button"
             >
               <Trash2 size={16} />
-              Aceptar, borrar
+              {isProduct ? "Aceptar, desactivar" : "Aceptar, borrar"}
             </button>
           </div>
         </section>

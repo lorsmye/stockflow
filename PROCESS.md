@@ -67,11 +67,15 @@ Next.js Route Handlers
 
    Elegi un monolito deployable en Vercel para concentrar el tiempo en funcionalidad y no en infraestructura. Esto tambien hace que el frontend y backend compartan modelos mentales y validaciones.
 
-2. Worker simple en lugar de cola externa
+2. Soft delete de productos
+
+   Los productos se desactivan en lugar de borrarse fisicamente. Asi el SKU sigue reservado y los movimientos historicos conservan una referencia valida, evitando que un producto nuevo herede el historial de otro SKU reutilizado.
+
+3. Worker simple en lugar de cola externa
 
    Use `after()` para disparar el worker despues de responder con el movimiento `pending`, y mantuve un endpoint de worker para cron o reintentos manuales. Si el worker detecta un fallo recuperable, agenda un segundo ciclo corto antes de marcar `failed`. Es una solucion pragmatica para 48 horas. El trade-off es que no tiene las garantias operativas de Redis/RabbitMQ.
 
-3. Descuento atomico de stock
+4. Descuento atomico de stock
 
    Para salidas y transferencias, primero valido que haya stock al crear el movimiento, pero el descuento real usa una condicion atomica en MongoDB: solo descuenta si `quantity >= cantidad`. Esto cubre el caso mas importante de concurrencia: dos movimientos creados como pendientes compitiendo por el mismo inventario.
 

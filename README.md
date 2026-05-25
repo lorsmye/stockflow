@@ -14,6 +14,8 @@ Mini plataforma fullstack para controlar inventario multi-sucursal con movimient
 ## Funcionalidad
 
 - CRUD de productos.
+- Los productos se desactivan en lugar de borrarse fisicamente para preservar historial.
+- El SKU es unico y no se reutiliza aunque el producto quede inactivo.
 - CRUD de sucursales.
 - Dashboard con stock total por producto y stock por sucursal.
 - Registro de entradas, salidas y transferencias.
@@ -127,6 +129,8 @@ No use RabbitMQ/BullMQ en esta version. Para 48 horas, el procesamiento se resue
 La concurrencia de stock se maneja con `findOneAndUpdate` atomico usando `quantity: { $gte: cantidad }`. Si dos salidas compiten por el mismo stock, Mongo solo permite descontar a la que aun cumple la condicion.
 
 Al crear una salida o transferencia tambien se valida el stock visible en ese momento. El worker vuelve a validar de forma atomica al procesar, porque entre la creacion `pending` y el procesamiento puede haber otro movimiento que consuma el inventario.
+
+Los productos usan soft delete: al desactivar un producto se oculta de altas y movimientos nuevos, pero se conserva para movimientos historicos. El SKU queda reservado para evitar que un nuevo producto herede accidentalmente el historial de otro.
 
 Las transferencias descuentan origen y luego incrementan destino. Si el incremento falla, se intenta compensar devolviendo stock al origen. Para una version mas robusta usaria transacciones MongoDB en replica set.
 

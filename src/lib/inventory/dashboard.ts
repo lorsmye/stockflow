@@ -2,7 +2,7 @@ import { Branch, Product, Stock } from "@/models";
 
 export async function getInventoryDashboard() {
   const [products, branches, stocks] = await Promise.all([
-    Product.find().sort({ name: 1 }).lean(),
+    Product.find({ isActive: { $ne: false } }).sort({ name: 1 }).lean(),
     Branch.find().sort({ name: 1 }).lean(),
     Stock.find().lean(),
   ]);

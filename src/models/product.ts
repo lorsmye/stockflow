@@ -13,6 +13,8 @@ export interface ProductDocument extends Document {
   name: string;
   price: number;
   category: string;
+  isActive: boolean;
+  deactivatedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +32,8 @@ const ProductSchema = new Schema<ProductDocument>(
     name: { type: String, required: true, trim: true },
     price: { type: Number, required: true, min: 0 },
     category: { type: String, required: true, trim: true },
+    isActive: { type: Boolean, default: true, index: true },
+    deactivatedAt: Date,
   },
   { timestamps: true },
 );
