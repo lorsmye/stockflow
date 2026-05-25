@@ -205,28 +205,28 @@ button:disabled {
   grid-template-columns: minmax(320px, 0.75fr) minmax(0, 1.25fr);
 }
 
-.movement-layout {
+.management-layout {
   align-items: start;
 }
 
-.movement-form {
+.management-form {
   align-self: start;
 }
 
-.movement-history {
+.management-list {
   display: flex;
   flex-direction: column;
   max-height: min(760px, calc(100vh - 220px));
   min-height: 420px;
 }
 
-.movement-table-wrap {
+.management-table-wrap {
   flex: 1;
   min-height: 0;
   overflow: auto;
 }
 
-.movement-table-wrap thead th {
+.management-table-wrap thead th {
   background: var(--panel);
   position: sticky;
   top: 0;

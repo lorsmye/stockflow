@@ -493,8 +493,8 @@ export function StockFlowApp() {
 
   function renderProducts() {
     return (
-      <section className="layout-grid two">
-        <form className="panel form-grid" onSubmit={handleProductSubmit}>
+      <section className="layout-grid two management-layout">
+        <form className="panel form-grid management-form" onSubmit={handleProductSubmit}>
           <div className="panel-header">
             <div>
               <h2>{editingProductId ? "Editar producto" : "Nuevo producto"}</h2>
@@ -571,14 +571,14 @@ export function StockFlowApp() {
           </div>
         </form>
 
-        <section className="panel">
+        <section className="panel management-list">
           <div className="panel-header">
             <div>
               <h2>Productos</h2>
               <p>{products.length} registros.</p>
             </div>
           </div>
-          <div className="table-wrap">
+          <div className="table-wrap management-table-wrap">
             <table>
               <thead>
                 <tr>
@@ -628,8 +628,8 @@ export function StockFlowApp() {
 
   function renderBranches() {
     return (
-      <section className="layout-grid two">
-        <form className="panel form-grid" onSubmit={handleBranchSubmit}>
+      <section className="layout-grid two management-layout">
+        <form className="panel form-grid management-form" onSubmit={handleBranchSubmit}>
           <div className="panel-header">
             <div>
               <h2>{editingBranchId ? "Editar sucursal" : "Nueva sucursal"}</h2>
@@ -679,14 +679,14 @@ export function StockFlowApp() {
           </div>
         </form>
 
-        <section className="panel">
+        <section className="panel management-list">
           <div className="panel-header">
             <div>
               <h2>Sucursales</h2>
               <p>{branches.length} registros.</p>
             </div>
           </div>
-          <div className="table-wrap">
+          <div className="table-wrap management-table-wrap">
             <table>
               <thead>
                 <tr>
@@ -732,8 +732,8 @@ export function StockFlowApp() {
 
   function renderMovements() {
     return (
-      <section className="layout-grid two movement-layout">
-        <form className="panel form-grid movement-form" onSubmit={handleMovementSubmit}>
+      <section className="layout-grid two management-layout">
+        <form className="panel form-grid management-form" onSubmit={handleMovementSubmit}>
           <div className="panel-header">
             <div>
               <h2>Nuevo movimiento</h2>
@@ -842,7 +842,7 @@ export function StockFlowApp() {
           </div>
         </form>
 
-        <section className="panel movement-history">
+        <section className="panel management-list movement-history">
           <div className="panel-header">
             <div>
               <h2>Historial</h2>
@@ -873,7 +873,7 @@ export function StockFlowApp() {
               </select>
             </div>
           </div>
-          <div className="table-wrap movement-table-wrap">
+          <div className="table-wrap management-table-wrap">
             <table>
               <thead>
                 <tr>
