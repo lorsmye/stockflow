@@ -323,18 +323,25 @@ export function StockFlowApp() {
     event.preventDefault();
 
     await runAction(async () => {
-      await apiRequest<Movement>("/api/movements", {
+      const createdMovement = await apiRequest<Movement>("/api/movements", {
         method: "POST",
         body: JSON.stringify(movementForm),
       });
+      if (
+        movementMatchesFilters(createdMovement, movementStatusFilter, movementBranchFilter)
+      ) {
+        setMovements((current) => [
+          createdMovement,
+          ...current.filter((movement) => movement.id !== createdMovement.id),
+        ]);
+      }
       setMovementForm({ ...emptyMovementForm, productId: movementForm.productId });
-      await Promise.all([loadMovements(), loadStocks()]);
 
       window.setTimeout(() => {
         void loadMovements().catch(() => undefined);
         void loadStocks().catch(() => undefined);
       }, 1200);
-    }, "Movimiento registrado como pendiente.");
+    }, "Movimiento registrado y enviado a procesamiento.");
   }
 
   async function confirmDelete() {
@@ -1231,6 +1238,33 @@ function movementRouteLabel(movement: Movement, branches: Branch[]) {
 
 function isPopulated<T extends { id: string }>(value: MaybePopulated<T>): value is T {
   return typeof value === "object" && value !== null && "id" in value;
+}
+
+function movementMatchesFilters(
+  movement: Movement,
+  statusFilter: string,
+  branchFilter: string,
+) {
+  if (statusFilter && movement.status !== statusFilter) {
+    return false;
+  }
+
+  if (!branchFilter) {
+    return true;
+  }
+
+  return (
+    getMaybePopulatedId(movement.fromBranchId) === branchFilter ||
+    getMaybePopulatedId(movement.toBranchId) === branchFilter
+  );
+}
+
+function getMaybePopulatedId<T extends { id: string }>(value: MaybePopulated<T>) {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  return isPopulated(value) ? value.id : "";
 }
 
 function formatDate(value: string) {
