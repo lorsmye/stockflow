@@ -16,7 +16,7 @@ Luego implemente el backend en este orden:
 1. Conexion MongoDB reutilizable para serverless.
 2. Modelos Mongoose e indices.
 3. CRUD de productos y sucursales.
-4. Registro de movimientos en estado `pending`.
+4. Registro de movimientos en estado `pending` con validacion inicial de stock cuando aplica.
 5. Worker con lock temporal, reintentos y actualizacion atomica de stock.
 6. Dashboard y reporte.
 7. UI operativa.
@@ -49,9 +49,6 @@ Next.js Route Handlers
   |
   +--> Crear movimiento pending
   |       |
-  |       v
-  |     after() dispara worker
-  |
   +--> Worker HTTP /api/worker/process
           |
           v
@@ -69,11 +66,11 @@ Next.js Route Handlers
 
 2. Worker simple en lugar de cola externa
 
-   Use `after()` para ejecutar trabajo despues de responder y deje un endpoint de worker para reintentos/manual/cron. Es una solucion pragmatica para 48 horas. El trade-off es que no tiene las garantias operativas de Redis/RabbitMQ.
+   Use un endpoint de worker para procesar movimientos despues de crearlos como `pending`. Es una solucion pragmatica para 48 horas y facilita demostrar el flujo desde la UI. El trade-off es que no tiene las garantias operativas de Redis/RabbitMQ.
 
 3. Descuento atomico de stock
 
-   Para salidas y transferencias, el descuento usa una condicion atomica en MongoDB: solo descuenta si `quantity >= cantidad`. Esto cubre el caso mas importante de concurrencia: dos movimientos compitiendo por el mismo inventario.
+   Para salidas y transferencias, primero valido que haya stock al crear el movimiento, pero el descuento real usa una condicion atomica en MongoDB: solo descuenta si `quantity >= cantidad`. Esto cubre el caso mas importante de concurrencia: dos movimientos creados como pendientes compitiendo por el mismo inventario.
 
 ## Que deje para el final
 

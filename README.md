@@ -18,8 +18,9 @@ Mini plataforma fullstack para controlar inventario multi-sucursal con movimient
 - Dashboard con stock total por producto y stock por sucursal.
 - Registro de entradas, salidas y transferencias.
 - Movimientos creados como `pending` y procesados despues de responder al cliente.
-- Worker HTTP en `/api/worker/process` para procesar pendientes manualmente o desde cron.
+- Worker HTTP en `/api/worker/process` para procesar pendientes desde el boton de la UI o desde cron.
 - Reintentos: cada movimiento falla definitivamente hasta agotar `maxAttempts`.
+- Validacion inicial de stock al registrar salidas/transferencias.
 - Validacion atomica de stock disponible con MongoDB para evitar sobreventa por concurrencia.
 - Historial de movimientos con filtros por estado y sucursal.
 - Detalle de cada movimiento.
@@ -111,7 +112,7 @@ Next.js Route Handlers
 MongoDB Atlas / Mongo local
   |
   v
-Worker HTTP + after()
+Worker HTTP /api/worker/process
   |
   v
 Stocks actualizados + movimientos historicos
@@ -121,9 +122,11 @@ Stocks actualizados + movimientos historicos
 
 Use Next.js fullstack para reducir superficie de deploy: no hay CORS, no hay dos servicios que coordinar y las API Routes viven cerca de la UI.
 
-No use RabbitMQ/BullMQ en esta version. Para 48 horas, el procesamiento se resuelve con un worker HTTP y `after()` de Next.js para disparar trabajo despues de responder al cliente. Es simple, corre en Vercel y queda explicado. En produccion con mayor carga, moveria esto a BullMQ/Redis o una cola administrada.
+No use RabbitMQ/BullMQ en esta version. Para 48 horas, el procesamiento se resuelve con un worker HTTP ejecutado desde la UI o desde un cron. Es simple, corre en Vercel y deja visible el estado `pending` antes de actualizar stock. En produccion con mayor carga, moveria esto a BullMQ/Redis o una cola administrada.
 
 La concurrencia de stock se maneja con `findOneAndUpdate` atomico usando `quantity: { $gte: cantidad }`. Si dos salidas compiten por el mismo stock, Mongo solo permite descontar a la que aun cumple la condicion.
+
+Al crear una salida o transferencia tambien se valida el stock visible en ese momento. El worker vuelve a validar de forma atomica al procesar, porque entre la creacion `pending` y el procesamiento puede haber otro movimiento que consuma el inventario.
 
 Las transferencias descuentan origen y luego incrementan destino. Si el incremento falla, se intenta compensar devolviendo stock al origen. Para una version mas robusta usaria transacciones MongoDB en replica set.
 
